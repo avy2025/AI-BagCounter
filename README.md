@@ -13,7 +13,8 @@ In grain warehouses (mandis), manual counting of jute sacks during truck unloadi
 - **Automated Counting**: Incremental counting as workers cross a virtual line.
 - **Directional Detection**: Track IN and OUT movement separately.
 - **Scenario Tuning**: Optimized configurations for different camera angles and environments.
-- **Real-time Visualization**: Live HUD overlay showing counts, tracks, and the counting line.
+- **Web Dashboard**: Real-time processed video streaming via Flask.
+- **Visualization**: Live HUD overlay showing counts, tracks, and the counting line.
 - **Batch Processing**: Easily run analysis on multiple videos at once.
 
 ## 🧠 How It Works
@@ -66,6 +67,15 @@ python main.py --video scenario1.mp4 --config config/scenario1_config.yaml
 python run_all_scenarios.py
 ```
 
+### Web Dashboard (Real-time Streaming)
+1. Start the Flask server:
+   ```bash
+   $env:PYTHONPATH = ".;$env:PYTHONPATH"
+   python webapp/flask_server.py
+   ```
+2. Open your browser and navigate to `http://localhost:8000`.
+3. Select a scenario and click **"Start Analysis"** to view real-time processed results.
+
 ## 📊 Results Summary
 | Scenario | Count IN | Count OUT | Total |
 |----------|----------|-----------|-------|
@@ -83,7 +93,7 @@ Sample outputs can be found in the `assets/` directory.
 
 ## 🛣️ Roadmap
 - Support for real-time RTSP streams.
-- Web-based dashboard for monitoring multiple cameras.
+- Cloud deployment and database integration for long-term storage.
 - REST API for integration with warehouse management systems.
 - Custom-trained model for sack detection.
 
