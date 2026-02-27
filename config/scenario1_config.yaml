@@ -1,0 +1,10 @@
+# Scenario 1: Side view, wide shot
+model: yolov8n.pt
+confidence: 0.4
+line_position: 0.40
+count_direction: left_to_right
+cooldown_frames: 30
+track_classes: [0]
+show_preview: false
+save_output: true
+output_dir: outputs/scenario1

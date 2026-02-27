@@ -1,0 +1,10 @@
+# Scenario 3: Front-facing busy scene
+model: yolov8n.pt
+confidence: 0.35
+line_position: 0.60
+count_direction: left_to_right
+cooldown_frames: 30
+track_classes: [0]
+show_preview: false
+save_output: true
+output_dir: outputs/scenario3

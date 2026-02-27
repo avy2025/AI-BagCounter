@@ -1,0 +1,10 @@
+# Scenario 2: Portrait/vertical video
+model: yolov8n.pt
+confidence: 0.35
+line_position: 0.50
+count_direction: both
+cooldown_frames: 30
+track_classes: [0]
+show_preview: false
+save_output: true
+output_dir: outputs/scenario2

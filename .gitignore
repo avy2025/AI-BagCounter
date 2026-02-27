@@ -1,0 +1,11 @@
+# Include weights and sample videos
+# *.pt
+# *.mp4
+outputs/
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+dist/
+build/
+.ipynb_checkpoints/
