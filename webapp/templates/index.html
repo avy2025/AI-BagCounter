@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-BagCounter | Real-time Streaming Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="glass-container">
+        <header>
+            <div class="logo">
+                <span class="icon">🎒</span>
+                <h1>AI-BagCounter</h1>
+            </div>
+            <p class="subtitle">Real-time Jute Sack counting using YOLOv8 + ByteTrack</p>
+        </header>
+
+        <section id="streaming-area" class="hidden">
+            <div class="video-card">
+                <div class="card-header">
+                    <h2 id="current-scenario-title">Real-time Analysis</h2>
+                    <button class="btn-close" onclick="stopStream()">Back to Scenarios</button>
+                </div>
+                <div class="video-wrapper">
+                    <img id="videoStream" src="" alt="Video Stream">
+                    <div class="live-indicator">LIVE</div>
+                </div>
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="label">Bags IN</span>
+                        <span class="value" id="count-in">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Bags OUT</span>
+                        <span class="value" id="count-out">0</span>
+                    </div>
+                    <div class="stat-item highlight">
+                        <span class="label">TOTAL</span>
+                        <span class="value" id="count-total">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <main id="scenarios-grid">
+            <!-- Scenarios will be loaded here -->
+            <div class="loading-state">Initializing Dashboard...</div>
+        </main>
+
+        <footer>
+            <div class="status-bar">
+                <span class="status-dot"></span> System Ready
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+
+</html>
