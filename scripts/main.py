@@ -1,6 +1,11 @@
-import argparse
 import os
+import sys
 import logging
+import argparse
+
+# Add parent directory to sys.path so we can import 'src'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from src.counter import BagCounter
 from src.utils import setup_logging, load_config
 

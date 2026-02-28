@@ -1,12 +1,16 @@
 import os
 import subprocess
 import logging
+import sys
+
+# Add parent directory to sys.path so we can import 'src'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def run_scenarios():
     scenarios = [
-        ("Problem Statement Scenario1.mp4", "config/scenario1_config.yaml"),
-        ("Problem Statement Scenario2.mp4", "config/scenario2_config.yaml"),
-        ("Problem Statement Scenario3.mp4", "config/scenario3_config.yaml")
+        ("data/samples/Problem Statement Scenario1.mp4", "config/scenario1_config.yaml"),
+        ("data/samples/Problem Statement Scenario2.mp4", "config/scenario2_config.yaml"),
+        ("data/samples/Problem Statement Scenario3.mp4", "config/scenario3_config.yaml")
     ]
     
     print("=" * 50)
@@ -23,7 +27,7 @@ def run_scenarios():
         print(f"\n[RUNNING] Processing {video} with {config}...")
         
         cmd = [
-            "python", "main.py",
+            "python", "scripts/main.py",
             "--video", video,
             "--config", config
         ]
