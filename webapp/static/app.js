@@ -3,7 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const streamArea = document.getElementById('streaming-area');
     const videoStream = document.getElementById('videoStream');
     const scenarioTitle = document.getElementById('current-scenario-title');
+    const downloadBtn = document.getElementById('download-btn');
     let countInterval = null;
+    let currentScenarioId = null;
 
     async function init() {
         try {
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.startScenario = (id, title) => {
+        currentScenarioId = id;
         // Toggle UI
         grid.classList.add('hidden');
         streamArea.classList.remove('hidden');
@@ -37,6 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Start Video Stream with cache-buster
         videoStream.src = `/video_feed/${id}?t=${Date.now()}`;
+
+        // Enable download button for this scenario
+        if (downloadBtn) {
+            downloadBtn.disabled = false;
+        }
 
         // Start polling counts
         startCountingPolling();
@@ -52,6 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Stop polling
         if (countInterval) clearInterval(countInterval);
+        // Optional: disable download button if you want it per-session
+        // if (downloadBtn) downloadBtn.disabled = true;
+    };
+
+    window.downloadVideo = () => {
+        if (!currentScenarioId) return;
+        // Trigger a file download from the backend
+        window.location.href = `/download/${currentScenarioId}`;
     };
 
     function startCountingPolling() {

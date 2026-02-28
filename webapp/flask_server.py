@@ -1,6 +1,11 @@
 import os
 import logging
-from flask import Flask, render_template, Response, jsonify, request
+import sys
+from flask import Flask, render_template, Response, jsonify, request, send_file
+
+# Add parent directory to sys.path so we can import 'src'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from src.counter import BagCounter
 from src.utils import load_config, setup_logging
 from ultralytics import YOLO
@@ -23,9 +28,9 @@ shared_model = YOLO(MODEL_PATH)
 
 # Scenario Mapping
 SCENARIOS = {
-    "1": {"video": "Problem Statement Scenario1.mp4", "config": "config/scenario1_config.yaml", "title": "Scenario 1: Main Entrance"},
-    "2": {"video": "Problem Statement Scenario2.mp4", "config": "config/scenario2_config.yaml", "title": "Scenario 2: Loading Platform"},
-    "3": {"video": "Problem Statement Scenario3.mp4", "config": "config/scenario3_config.yaml", "title": "Scenario 3: Busy Corridor"}
+    "1": {"video": "data/samples/Problem Statement Scenario1.mp4", "config": "config/scenario1_config.yaml", "title": "Scenario 1: Main Entrance"},
+    "2": {"video": "data/samples/Problem Statement Scenario2.mp4", "config": "config/scenario2_config.yaml", "title": "Scenario 2: Loading Platform"},
+    "3": {"video": "data/samples/Problem Statement Scenario3.mp4", "config": "config/scenario3_config.yaml", "title": "Scenario 3: Busy Corridor"}
 }
 
 # Global counter instance (or per request if preferred, but user implies persist)
@@ -77,6 +82,47 @@ def get_counts():
             "total": active_counter.count_in + active_counter.count_out
         })
     return jsonify({"in": 0, "out": 0, "total": 0})
+
+
+@app.route("/download/<scenario_id>")
+def download_processed_video(scenario_id):
+    """
+    Generate and return an annotated MP4 for the given scenario.
+    This reuses the BagCounter.process_video pipeline on the server side.
+    """
+    if scenario_id not in SCENARIOS:
+        return jsonify({"error": "Unknown scenario"}), 404
+
+    scenario = SCENARIOS[scenario_id]
+    video_path = os.path.join(BASE_DIR, scenario["video"])
+    config_path = os.path.join(BASE_DIR, scenario["config"])
+
+    if not os.path.exists(video_path):
+        logger.error(f"Video file {scenario['video']} not found for download")
+        return jsonify({"error": "Video file not found on server"}), 404
+
+    # Load config and run offline processing to produce an annotated MP4
+    config = load_config(config_path)
+    counter = BagCounter(config, model=shared_model)
+
+    video_name = os.path.basename(video_path)
+    output_dir = os.path.join(BASE_DIR, config.get("output_dir", "outputs"))
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"annotated_{video_name}")
+
+    logger.info(f"Generating annotated video for download: {output_path}")
+    counter.process_video(video_path, output_path)
+
+    if not os.path.exists(output_path):
+        logger.error(f"Expected output video not found at {output_path}")
+        return jsonify({"error": "Failed to generate output video"}), 500
+
+    return send_file(
+        output_path,
+        as_attachment=True,
+        download_name=os.path.basename(output_path),
+        mimetype="video/mp4",
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=False, threaded=True)

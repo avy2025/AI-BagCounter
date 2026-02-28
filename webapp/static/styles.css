@@ -201,6 +201,34 @@ h1 {
     color: var(--accent-color);
 }
 
+.download-bar {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-download {
+    background: transparent;
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-download:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-download:not(:disabled):hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
 .status-bar {
     margin-top: 3rem;
     font-size: 0.8rem;
