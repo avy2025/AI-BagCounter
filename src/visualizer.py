@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Dict
 
 class Visualizer:
     """Handles drawing of HUD, bounding boxes, and counting line."""
@@ -28,16 +28,24 @@ class Visualizer:
         
         return frame
 
-    def draw_detections(self, frame: Any, boxes: List[Any], track_ids: List[int]) -> Any:
-        """Draws bounding boxes and track IDs."""
-        for box, track_id in zip(boxes, track_ids):
+    def draw_detections(self, frame: Any, detection_data: List[Dict[str, Any]]) -> Any:
+        """
+        Draws bounding boxes and track IDs with custom colors.
+        detection_data: List of {'box': [x1, y1, x2, y2], 'id': int, 'color': tuple, 'label': str}
+        """
+        for data in detection_data:
+            box = data['box']
+            track_id = data['id']
+            color = data['color']
+            label = data.get('label', 'Object')
+            
             x1, y1, x2, y2 = map(int, box)
             # Draw box
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            # Draw ID
-            cv2.putText(frame, f"ID: {track_id}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+            # Draw ID and Label
+            cv2.putText(frame, f"{label} ID: {track_id}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
             # Draw center point
             cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
-            cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+            cv2.circle(frame, (cx, cy), 5, color, -1)
             
         return frame

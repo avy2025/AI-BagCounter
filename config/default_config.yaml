@@ -3,7 +3,9 @@ confidence: 0.4
 line_position: 0.5       # fraction of frame width
 count_direction: both    # left_to_right | right_to_left | both
 cooldown_frames: 30
-track_classes: [0]       # 0 = person
+track_classes: [0, 24, 26, 28]       # 0 = person, 24 = backpack, 26 = handbag, 28 = suitcase
+roi_y_min: 0.4        # focus lower part of frame by default
+roi_y_max: 1.0
 show_preview: false
 save_output: true
 output_dir: outputs/

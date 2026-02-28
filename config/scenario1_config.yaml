@@ -4,7 +4,9 @@ confidence: 0.4
 line_position: 0.40
 count_direction: left_to_right
 cooldown_frames: 30
-track_classes: [0]
+track_classes: [0, 24, 26, 28]
+roi_y_min: 0.5        # focus bottom half (closest truck)
+roi_y_max: 1.0
 show_preview: false
 save_output: true
 output_dir: outputs/scenario1
