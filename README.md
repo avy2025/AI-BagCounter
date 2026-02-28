@@ -6,39 +6,46 @@
 
 AI-powered jute sack counting system for warehouse logistics using YOLOv8 + ByteTrack.
 
+## 🖼️ Web Dashboard Preview
+
+![AI-BagCounter Web Dashboard](assets/ai-bagcounter_scenario2_dashboard.png)
+
 ## 📌 Problem Statement
-In grain warehouses (mandis), manual counting of jute sacks during truck unloading is labor-intensive and error-prone. This system automates the process using computer vision. By detecting workers carrying sacks and tracking their movement across a virtual counting line, the system provides accurate, real-time counts of bags being moved.
+In grain warehouses (mandis), manual counting of jute sacks during truck unloading is labor-intensive and error-prone. This system automates the process by detecting bags and associating them with workers.
 
 ## 🎯 Features
-- **Automated Counting**: Incremental counting as workers cross a virtual line.
-- **Directional Detection**: Track IN and OUT movement separately.
-- **Scenario Tuning**: Optimized configurations for different camera angles and environments.
+- **Outbound Bag Counting**: Focuses on counting bags being loaded into trucks.
+- **Worker Association**: Automatically associates bags with workers to improve counting accuracy.
+- **Color-Coded Visualization**: 
+    - **Green Box**: Personnel carrying a bag.
+    - **Blue Box**: Personnel without a bag.
+    - **Yellow Box**: Detected bags.
 - **Web Dashboard**: Real-time processed video streaming via Flask.
-- **Visualization**: Live HUD overlay showing counts, tracks, and the counting line.
 - **Batch Processing**: Easily run analysis on multiple videos at once.
 
 ## 🧠 How It Works
 The system follows a multi-stage computer vision pipeline:
 
 ```
-Video Frame → YOLO Detection (Person) → ByteTrack ID Assignment → Line Crossing Check → Count Update → Annotated Output
+Video Frame → YOLO Detection (Person & Bags) → Person-Bag Association → Line Crossing Check (Bags Only) → Count Update → Annotated Output
 ```
 
-1. **Detection**: YOLOv8 detects people (used as a proxy for bag carriers).
-2. **Tracking**: ByteTrack maintains consistent IDs for each person across frames.
-3. **Line Crossing**: The system checks if a person's center point has crossed a pre-defined vertical line.
-4. **Counting**: Crossings are categorized based on direction (Left to Right or Right to Left).
-5. **Output**: An annotated video is saved with bounding boxes, IDs, and the current count.
+1. **Detection**: YOLOv8 detects both people and various bag-like objects (backpacks, handbags, suitcases).
+2. **Association**: A proximity-based algorithm checks which bags are being carried by which person.
+3. **Visualization**: Workers are highlighted in green if they have a bag, blue otherwise.
+4. **Counting**: The system only tracks the crossing of *bags* across the virtual line to ensure accurate inventory counting.
 
 ## 📁 Project Structure
 ```
 AI-BagCounter/
 ├── config/             # Scenario-specific configuration files
-├── src/                # Core source code
-├── notebooks/          # Analysis and demo notebooks
+├── src/                # Core source code (tracking, counting, visualization)
+├── scripts/            # CLI tools and batch processors
+├── data/               # Input videos and samples
+├── webapp/             # Flask-based web dashboard
 ├── tests/              # Unit tests
 ├── docs/               # Technical documentation
-└── assets/             # Sample images and media
+└── assets/             # Branding and static media
 ```
 
 ## ⚙️ Installation
@@ -51,51 +58,24 @@ AI-BagCounter/
    ```bash
    pip install -r requirements.txt
    ```
-3. (Optional) Install as a package:
-   ```bash
-   pip install -e .
-   ```
 
 ## ▶️ Usage
 ### Single Video Run
 ```bash
-python main.py --video scenario1.mp4 --config config/scenario1_config.yaml
+python scripts/main.py --video data/samples/scenario1.mp4 --config config/scenario1_config.yaml
 ```
 
 ### Batch Run
 ```bash
-python run_all_scenarios.py
+python scripts/run_all_scenarios.py
 ```
 
-### Web Dashboard (Real-time Streaming)
+### Web Dashboard
 1. Start the Flask server:
    ```bash
-   $env:PYTHONPATH = ".;$env:PYTHONPATH"
    python webapp/flask_server.py
    ```
 2. Open your browser and navigate to `http://localhost:8000`.
-3. Select a scenario and click **"Start Analysis"** to view real-time processed results.
-
-## 📊 Results Summary
-| Scenario | Count IN | Count OUT | Total |
-|----------|----------|-----------|-------|
-| Scenario 1 | - | - | - |
-| Scenario 2 | - | - | - |
-| Scenario 3 | - | - | - |
-
-## 📸 Sample Output
-Sample outputs can be found in the `assets/` directory.
-
-## 🔧 Improving Accuracy
-- **Model Selection**: Switch to `yolov8m.pt` or `yolov8l.pt` for better detection at the cost of speed.
-- **Custom Training**: Fine-tune YOLOv8 specifically on jute sacks to avoid using "person" as a proxy.
-- **Confidence Threshold**: Adjust `--conf` in the YAML config to filter out false positives.
-
-## 🛣️ Roadmap
-- Support for real-time RTSP streams.
-- Cloud deployment and database integration for long-term storage.
-- REST API for integration with warehouse management systems.
-- Custom-trained model for sack detection.
 
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
