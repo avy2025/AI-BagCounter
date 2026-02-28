@@ -16,10 +16,6 @@ In grain warehouses (mandis), manual counting of jute sacks during truck unloadi
 ## 🎯 Features
 - **Outbound Bag Counting**: Focuses on counting bags being loaded into trucks.
 - **Worker Association**: Automatically associates bags with workers to improve counting accuracy.
-- **Color-Coded Visualization**: 
-    - **Green Box**: Personnel carrying a bag.
-    - **Blue Box**: Personnel without a bag.
-    - **Yellow Box**: Detected bags.
 - **Web Dashboard**: Real-time processed video streaming via Flask.
 - **Batch Processing**: Easily run analysis on multiple videos at once.
 
