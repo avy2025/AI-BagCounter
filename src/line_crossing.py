@@ -9,12 +9,13 @@ class Direction(Enum):
 class LineCrossingDetector:
     """Detects if tracked objects cross a vertical virtual line."""
     
-    def __init__(self, line_x: int, direction: Direction, cooldown_frames: int = 30):
+    def __init__(self, line_x: int, direction: Direction, cooldown_frames: int = 30, line_margin: int = 0):
         self.line_x = line_x
         self.direction = direction
         self.cooldown_frames = cooldown_frames
-        self.tracks_history: Dict[int, List[float]] = {}  # {track_id: [prev_x]}
-        self.tracks_cooldown: Dict[int, int] = {}       # {track_id: cooldown_remaining}
+        self.line_margin = line_margin  # pixels: require clear crossing to reduce jitter
+        self.tracks_history: Dict[int, float] = {}
+        self.tracks_cooldown: Dict[int, int] = {}
 
     def update(self, tracks: List[Tuple[int, float]]) -> Tuple[int, int]:
         """
@@ -24,8 +25,8 @@ class LineCrossingDetector:
         """
         count_in = 0
         count_out = 0
+        m = self.line_margin
         
-        # Update cooldowns
         for track_id in list(self.tracks_cooldown.keys()):
             self.tracks_cooldown[track_id] -= 1
             if self.tracks_cooldown[track_id] <= 0:
@@ -35,16 +36,15 @@ class LineCrossingDetector:
             if track_id in self.tracks_history:
                 prev_x = self.tracks_history[track_id]
                 
-                # Check for crossing
                 if track_id not in self.tracks_cooldown:
-                    # Left to Right: prev_x < line_x and curr_x >= line_x
-                    if prev_x < self.line_x <= curr_x:
+                    # Left to Right: was clearly left, now clearly right
+                    if prev_x <= self.line_x - m and curr_x >= self.line_x + m:
                         if self.direction in [Direction.LEFT_TO_RIGHT, Direction.BOTH]:
                             count_in += 1
                             self.tracks_cooldown[track_id] = self.cooldown_frames
                     
-                    # Right to Left: prev_x > line_x and curr_x <= line_x
-                    elif prev_x > self.line_x >= curr_x:
+                    # Right to Left: was clearly right, now clearly left
+                    elif prev_x >= self.line_x + m and curr_x <= self.line_x - m:
                         if self.direction in [Direction.RIGHT_TO_LEFT, Direction.BOTH]:
                             count_out += 1
                             self.tracks_cooldown[track_id] = self.cooldown_frames

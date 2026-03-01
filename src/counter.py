@@ -1,3 +1,4 @@
+import os
 import cv2
 import logging
 from typing import Dict, Any, List
@@ -28,7 +29,7 @@ class BagCounter:
 
     def stream_video(self, video_path: str):
         """Generator that yields processed video frames as JPEG bytes."""
-        if not cv2.os.path.exists(video_path):
+        if not os.path.exists(video_path):
             logger.error(f"Video not found: {video_path}")
             return
 
@@ -44,7 +45,8 @@ class BagCounter:
         self.detector = LineCrossingDetector(
             line_x=line_x, 
             direction=direction,
-            cooldown_frames=self.config.get('cooldown_frames', 30)
+            cooldown_frames=self.config.get('cooldown_frames', 30),
+            line_margin=self.config.get('line_margin', 0)
         )
         self.visualizer = Visualizer(line_x=line_x, height=height)
 
@@ -106,7 +108,6 @@ class BagCounter:
                             person_centers.append((p['id'], pcx))
                     
                     cin, cout = self.detector.update(person_centers)
-                    # Track both directions; scenario config defines which flow is "into truck".
                     self.count_in += cin
                     self.count_out += cout
                     
@@ -139,7 +140,7 @@ class BagCounter:
 
     def process_video(self, video_path: str, output_path: str = None) -> Dict[str, int]:
         """Processes a video file and counts bag crossings."""
-        if not cv2.os.path.exists(video_path):
+        if not os.path.exists(video_path):
             logger.error(f"Video not found: {video_path}")
             return {"in": 0, "out": 0}
 
@@ -155,7 +156,8 @@ class BagCounter:
         self.detector = LineCrossingDetector(
             line_x=line_x, 
             direction=direction,
-            cooldown_frames=self.config.get('cooldown_frames', 30)
+            cooldown_frames=self.config.get('cooldown_frames', 30),
+            line_margin=self.config.get('line_margin', 0)
         )
         self.visualizer = Visualizer(line_x=line_x, height=height)
 
@@ -216,8 +218,12 @@ class BagCounter:
                         person_centers.append((p['id'], pcx))
                 
                 cin, cout = self.detector.update(person_centers)
-                self.count_in += cin
-                self.count_out += cout
+                if swap_in_out:
+                    self.count_in += cout
+                    self.count_out += cin
+                else:
+                    self.count_in += cin
+                    self.count_out += cout
                 
                 # Visualization
                 if writer or self.config.get('show_preview'):
