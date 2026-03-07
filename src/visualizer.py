@@ -1,18 +1,24 @@
 import cv2
 import numpy as np
 from typing import Any, List, Tuple, Dict
+from .line_crossing import Orientation
 
 class Visualizer:
     """Handles drawing of HUD, bounding boxes, and counting line."""
     
-    def __init__(self, line_x: int, height: int):
-        self.line_x = line_x
+    def __init__(self, line_coord: int, orientation: Orientation, width: int, height: int):
+        self.line_coord = line_coord
+        self.orientation = orientation
+        self.width = width
         self.height = height
 
     def draw_hud(self, frame: Any, count_in: int, count_out: int, frame_idx: int) -> Any:
         """Draws the counting line and HUD overlay."""
         # Draw counting line
-        cv2.line(frame, (self.line_x, 0), (self.line_x, self.height), (0, 0, 255), 3)
+        if self.orientation == Orientation.HORIZONTAL:
+            cv2.line(frame, (0, self.line_coord), (self.width, self.line_coord), (0, 0, 255), 3)
+        else:
+            cv2.line(frame, (self.line_coord, 0), (self.line_coord, self.height), (0, 0, 255), 3)
         
         # HUD Background
         overlay = frame.copy()
