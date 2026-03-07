@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--config", type=str, default="config/default_config.yaml", help="Path to config YAML")
     parser.add_argument("--line", type=float, help="Override line position (0.0 - 1.0)")
     parser.add_argument("--conf", type=float, help="Override confidence threshold")
-    parser.add_argument("--direction", type=str, choices=["left_to_right", "right_to_left", "both"], help="Override count direction")
+    parser.add_argument("--direction", type=str, choices=["top_to_bottom", "bottom_to_top", "both"], help="Override count direction")
     parser.add_argument("--model", type=str, help="Override YOLO model path")
     parser.add_argument("--show", action="store_true", help="Show live preview")
     parser.add_argument("--save", action="store_true", default=True, help="Save output video")
