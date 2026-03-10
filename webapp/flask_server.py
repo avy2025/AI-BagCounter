@@ -20,7 +20,7 @@ app = Flask(__name__,
 # Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = BASE_DIR
-MODEL_PATH = os.path.join(MODELS_DIR, "yolov8n.pt")
+MODEL_PATH = os.path.join(MODELS_DIR, "best.pt")
 
 # 1. Load YOLO Model ONLY ONCE at startup
 logger.info(f"Loading YOLO model from {MODEL_PATH}...")
