@@ -1,7 +1,8 @@
 # Scenario 2: Portrait/vertical video
-model: yolov8n.pt
+model: best.pt
 confidence: 0.35
 line_position: 0.50
+line_orientation: vertical
 count_direction: both
 cooldown_frames: 30
 track_classes: [0, 24, 26, 28]

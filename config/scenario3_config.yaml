@@ -1,8 +1,9 @@
 # Scenario 3: Front-facing busy scene
-model: yolov8n.pt
+model: best.pt
 confidence: 0.35
 line_position: 0.60
-count_direction: left_to_right
+line_orientation: vertical
+count_direction: both
 cooldown_frames: 30
 track_classes: [0, 24, 26, 28]
 roi_y_min: 0.4        # focus lower part to avoid distant crowd

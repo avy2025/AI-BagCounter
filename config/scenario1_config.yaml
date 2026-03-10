@@ -1,7 +1,8 @@
 # Scenario 1: Side view, wide shot
-model: yolov8n.pt
+model: best.pt
 confidence: 0.25
 line_position: 0.55
+line_orientation: vertical
 count_direction: both
 cooldown_frames: 25
 line_margin: 2
