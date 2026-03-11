@@ -6,6 +6,8 @@ line_orientation: vertical
 count_direction: both
 cooldown_frames: 30
 track_classes: [0, 24, 26, 28]
+person_classes: [0]
+bag_classes: [0, 24, 26, 28]
 roi_y_min: 0.45       # focus lower region where closest loading happens
 roi_y_max: 1.0
 show_preview: false

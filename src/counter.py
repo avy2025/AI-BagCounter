@@ -27,6 +27,39 @@ class BagCounter:
             self.detector.tracks_history.clear()
             self.detector.tracks_cooldown.clear()
 
+    def _associate_bags_to_people(self, people: List[Dict], bags: List[Dict], threshold: float = 150.0) -> List[Dict]:
+        """Associates bags with the nearest person and labels them as workers."""
+        for p in people:
+            p['has_bag'] = False
+            p['bag_ids'] = []
+
+        associated_bags = []
+        for b in bags:
+            bx1, by1, bx2, by2 = b['box']
+            bcx, bcy = (bx1 + bx2) / 2, (by1 + by2) / 2
+            
+            min_dist = float('inf')
+            best_person = None
+            
+            for p in people:
+                px1, py1, px2, py2 = p['box']
+                pcx, pcy = (px1 + px2) / 2, (py1 + py2) / 2
+                dist = ((bcx - pcx)**2 + (bcy - pcy)**2)**0.5
+                
+                if dist < min_dist and dist < threshold:
+                    min_dist = dist
+                    best_person = p
+            
+            if best_person:
+                best_person['has_bag'] = True
+                best_person['bag_ids'].append(b['id'])
+                b['associated'] = True
+                associated_bags.append(b)
+            else:
+                b['associated'] = False
+        
+        return associated_bags
+
     def stream_video(self, video_path: str):
         """Generator that yields processed video frames as JPEG bytes."""
         if not os.path.exists(video_path):
@@ -66,46 +99,60 @@ class BagCounter:
                 
                 frame_idx += 1
                 
-                # Tracking (persist=True is handled in TrackerWrapper)
+                # Tracking
                 results = self.tracker.track(
                     frame, 
                     conf=self.config.get('confidence', 0.4),
-                    classes=self.config.get('track_classes', [0, 24, 26, 28]) # person, backpack, handbag, suitcase
+                    classes=self.config.get('track_classes', [0, 24, 26, 28])
                 )
                 
                 if results.boxes.id is not None:
                     boxes = results.boxes.xyxy.cpu().numpy()
                     track_ids = results.boxes.id.cpu().numpy().astype(int)
+                    cls_ids = results.boxes.cls.cpu().numpy().astype(int)
                     
-                    sacks = []
+                    person_classes = self.config.get('person_classes', [0])
+                    bag_classes = self.config.get('bag_classes', [24, 26, 28])
+                    
+                    people = []
+                    bags = []
                     for i in range(len(track_ids)):
-                        sacks.append({'box': boxes[i], 'id': track_ids[i]})
+                        item = {'box': boxes[i], 'id': track_ids[i]}
+                        if cls_ids[i] in person_classes:
+                            people.append(item)
+                        if cls_ids[i] in bag_classes:
+                            bags.append(item)
 
-                    # Crossing Logic for sacks
+                    # Association
+                    associated_bags = self._associate_bags_to_people(people, bags)
+
+                    # Crossing Logic for associated bags only (higher precision)
                     sack_points = []
-                    for s in sacks:
-                        sx1, sy1, sx2, sy2 = s['box']
-                        scx, scy = (sx1 + sx2) / 2, (sy1 + sy2) / 2
-                        
-                        coord = scy if self.orientation == Orientation.HORIZONTAL else scx
-                        sack_points.append((s['id'], coord))
+                    for b in associated_bags:
+                        bx1, by1, bx2, by2 = b['box']
+                        bcx, bcy = (bx1 + bx2) / 2, (by1 + by2) / 2
+                        coord = bcy if self.orientation == Orientation.HORIZONTAL else bcx
+                        sack_points.append((b['id'], coord))
                     
                     cin, cout = self.detector.update(sack_points)
                     self.count_in += cin
                     self.count_out += cout
                     
-                    # Visualization data preparation
+                    # Visualization data
                     detection_data = []
-                    for s in sacks:
-                        detection_data.append({'box': s['box'], 'id': s['id'], 'color': (0, 255, 255), 'label': 'Sack'})
+                    for p in people:
+                        color = (0, 255, 0) if p['has_bag'] else (255, 0, 0)
+                        label = "Worker (Bag)" if p['has_bag'] else "Person"
+                        detection_data.append({'box': p['box'], 'id': p['id'], 'color': color, 'label': label})
+                    
+                    for b in bags:
+                        if b['associated']:
+                            detection_data.append({'box': b['box'], 'id': b['id'], 'color': (0, 255, 255), 'label': 'Sack'})
 
-                    # Visualization
                     frame = self.visualizer.draw_detections(frame, detection_data)
 
-                # HUD
                 frame = self.visualizer.draw_hud(frame, self.count_in, self.count_out, frame_idx)
                 
-                # Encode to JPEG
                 ret, buffer = cv2.imencode('.jpg', frame)
                 if not ret:
                     continue
@@ -115,7 +162,6 @@ class BagCounter:
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
         finally:
             cap.release()
-            logger.info(f"Stream released for {video_path}")
 
     def process_video(self, video_path: str, output_path: str = None) -> Dict[str, int]:
         """Processes a video file and counts bag crossings."""
@@ -158,7 +204,6 @@ class BagCounter:
             
             frame_idx += 1
             
-            # Tracking (people + bag-like classes)
             results = self.tracker.track(
                 frame, 
                 conf=self.config.get('confidence', 0.4),
@@ -170,48 +215,48 @@ class BagCounter:
                 track_ids = results.boxes.id.cpu().numpy().astype(int)
                 cls_ids = results.boxes.cls.cpu().numpy().astype(int)
 
-                if frame_idx % 30 == 0:
-                    logger.info(f"Frame {frame_idx}: Detected classes: {cls_ids}, Track IDs: {track_ids}")
+                person_classes = self.config.get('person_classes', [0])
+                bag_classes = self.config.get('bag_classes', [24, 26, 28])
 
-                sacks = []
+                people = []
+                bags = []
                 for i in range(len(track_ids)):
-                    if cls_ids[i] == 0:
-                        sacks.append({'box': boxes[i], 'id': track_ids[i]})
+                    item = {'box': boxes[i], 'id': track_ids[i]}
+                    if cls_ids[i] in person_classes:
+                        people.append(item)
+                    if cls_ids[i] in bag_classes:
+                        bags.append(item)
 
-                # Crossing Logic for sacks
+                associated_bags = self._associate_bags_to_people(people, bags)
+
                 sack_points = []
-                for s in sacks:
-                    sx1, sy1, sx2, sy2 = s['box']
-                    scx, scy = (sx1 + sx2) / 2, (sy1 + sy2) / 2
-                    
-                    coord = scy if self.orientation == Orientation.HORIZONTAL else scx
-                    sack_points.append((s['id'], coord))
+                for b in associated_bags:
+                    bx1, by1, bx2, by2 = b['box']
+                    bcx, bcy = (bx1 + bx2) / 2, (by1 + by2) / 2
+                    coord = bcy if self.orientation == Orientation.HORIZONTAL else bcx
+                    sack_points.append((b['id'], coord))
                 
                 cin, cout = self.detector.update(sack_points)
                 self.count_in += cin
                 self.count_out += cout
                 
-                # Visualization
                 if writer or self.config.get('show_preview'):
                     detection_data = []
-                    for s in sacks:
-                        detection_data.append({'box': s['box'], 'id': s['id'], 'color': (0, 255, 255), 'label': 'Sack'})
+                    for p in people:
+                        color = (0, 255, 0) if p['has_bag'] else (255, 0, 0)
+                        label = "Worker (Bag)" if p['has_bag'] else "Person"
+                        detection_data.append({'box': p['box'], 'id': p['id'], 'color': color, 'label': label})
+                    
+                    for b in bags:
+                        if b['associated']:
+                            detection_data.append({'box': b['box'], 'id': b['id'], 'color': (0, 255, 255), 'label': 'Sack'})
                     
                     frame = self.visualizer.draw_detections(frame, detection_data)
 
-            # HUD
             if writer or self.config.get('show_preview'):
                 frame = self.visualizer.draw_hud(frame, self.count_in, self.count_out, frame_idx)
-                
                 if writer:
-                    if not writer.isOpened():
-                         logger.error(f"VideoWriter not opened for {output_path}")
-                    success_write = writer.write(frame)
-                    if not success_write:
-                        # writer.write doesn't return anything in some versions, but we check if we can
-                        pass
-
-                
+                    writer.write(frame)
                 if self.config.get('show_preview'):
                     cv2.imshow("AI-BagCounter", frame)
                     if cv2.waitKey(1) & 0xFF == ord('q'):
