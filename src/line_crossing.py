@@ -45,23 +45,38 @@ class LineCrossingDetector:
                 del self.tracks_cooldown[track_id]
 
         for track_id, curr_coord in tracks:
+            # Determine current side: -1 (below margin), 0 (inside margin), 1 (above margin)
+            if curr_coord < self.line_coord - m:
+                curr_side = -1
+            elif curr_coord > self.line_coord + m:
+                curr_side = 1
+            else:
+                curr_side = 0
+
             if track_id in self.tracks_history:
-                prev_coord = self.tracks_history[track_id]
+                prev_side = self.tracks_history[track_id]
                 
                 if track_id not in self.tracks_cooldown:
-                    # Generic crossing logic
-                    if prev_coord <= self.line_coord - m and curr_coord >= self.line_coord + m:
-                        # Top-to-Bottom OR Left-to-Right
+                    # Crossing from below to above
+                    if prev_side == -1 and curr_side == 1:
                         if self.direction in [Direction.TOP_TO_BOTTOM, Direction.LEFT_TO_RIGHT, Direction.BOTH]:
                             count_in += 1
+                            logger.info(f"Track {track_id} crossed line: IN (side -1 -> 1)")
                             self.tracks_cooldown[track_id] = self.cooldown_frames
                     
-                    elif prev_coord >= self.line_coord + m and curr_coord <= self.line_coord - m:
-                        # Bottom-to-Top OR Right-to-Left
+                    # Crossing from above to below
+                    elif prev_side == 1 and curr_side == -1:
                         if self.direction in [Direction.BOTTOM_TO_TOP, Direction.RIGHT_TO_LEFT, Direction.BOTH]:
                             count_out += 1
+                            logger.info(f"Track {track_id} crossed line: OUT (side 1 -> -1)")
                             self.tracks_cooldown[track_id] = self.cooldown_frames
                 
-            self.tracks_history[track_id] = curr_coord
+                # Only update history if we are outside the margin zone to preserve "prev_side"
+                if curr_side != 0:
+                    self.tracks_history[track_id] = curr_side
+            else:
+                # Initialize history if outside margin
+                if curr_side != 0:
+                    self.tracks_history[track_id] = curr_side
             
         return count_in, count_out
