@@ -10,10 +10,6 @@ AI-powered jute sack counting system for warehouse logistics using YOLOv8 + Byte
 
 ![AI-BagCounter Web Dashboard](assets/ai-bagcounter_scenario2_dashboard.png)
 
-## 🎬 Demo
-
-![AI-BagCounter Demo](assets/demo.gif)
-*(Placeholder: Add your demo GIF in the assets folder)*
 
 ## 📌 Problem Statement
 In grain warehouses (mandis), manual counting of jute sacks during truck unloading is labor-intensive and error-prone. This system automates the process by detecting bags and associating them with workers.
